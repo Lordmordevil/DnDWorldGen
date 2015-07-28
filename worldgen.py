@@ -16,6 +16,9 @@ class WorldSait:
         self.center = center
         self.neighbours = []
         self.borders = []
+
+        self.isOcean = False
+        self.isWater = False
         
     @property
     def name(self):
@@ -28,11 +31,34 @@ class WorldSait:
     def addNeighbour(self, neighbourKey, border):
         self.neighbours.append(neighbourKey)
         self.borders.append(border)
+        if border is None:
+            self.isOcean = True
+
+    def getColor(self):
+        color = (236, 240, 241)
+        if self.isOcean:
+            color = (41, 128, 185)
+        elif self.isWater:
+            color = (52, 152, 219)
+        return color
 
     def draw(self, screen):
-        pygame.draw.circle(screen, (200, 0, 0), (int(self.center.x), int(self.center.y)), 2, 1)
+        boundPoints = []
+        shouldDrawPoly = True;
+
+        if len(self.borders) < 2:
+            shouldDrawPoly = False
+
         for border in self.borders:
-            pygame.draw.line(screen, (0, 200, 0), (int(border.start.x), int(border.start.y)), (int(border.end.x), int(border.end.y)), 1)
+            if shouldDrawPoly:
+                if len(boundPoints) == 0:
+                    boundPoints.append([int(border.start.x), int(border.start.y)])
+                boundPoints.append([int(border.end.x), int(border.end.y)])
+            #pygame.draw.line(screen, (0, 200, 0), (int(border.start.x), int(border.start.y)), (int(border.end.x), int(border.end.y)), 1)
+        if shouldDrawPoly:
+            pygame.draw.polygon(screen, self.getColor(), boundPoints)
+        pygame.draw.circle(screen, (200, 0, 0), (int(self.center.x), int(self.center.y)), 2, 1)
+
 
 class WorldMap:
     def __init__(self, seed, size):
@@ -42,6 +68,7 @@ class WorldMap:
         self.worldSites = {}
 
         self.generateFrame()
+        self.siteDataCleanup()
 
     def seedFrame(self, points, step):
         for i in range(step, self.size[0] - step, step):
@@ -52,7 +79,9 @@ class WorldMap:
 
     def generateFrame(self):
         points = []
-        self.seedFrame(points, 20) # step needs to be calced based on world params
+
+        self.seedFrame(points, 40)
+        #self.seedFrame(points, 20) # step needs to be calced based on world params
         triangulation = Triangulation(points)
         delaunay = Delaunay(triangulation)
         voronoi = Voronoi(triangulation, (0,0, self.size[0], self.size[1]))
@@ -78,9 +107,91 @@ class WorldMap:
             elif len(trEdge.vEdge) == 1:
                 bordStart = voronoi.points[trEdge.vEdge[0].a]
                 bordEnd = voronoi.points[trEdge.vEdge[0].b]
-                border = Border(bordStart, bordEnd)
+                if ((bordStart.x > 0 and bordStart.x < self.size[0] and
+                    bordStart.y > 0 and bordStart.y < self.size[1]) and
+                    (bordEnd.x > 0 and bordEnd.x < self.size[0] and
+                    bordEnd.y > 0 and bordEnd.y < self.size[1])):
+                    border = Border(bordStart, bordEnd)
             siteOne.addNeighbour(siteTwo.key, border)
             siteTwo.addNeighbour(siteOne.key, border)
+
+    def siteDataCleanup(self):
+        #Cleanup borders
+        for site in self.worldSites.items():
+            newBorders = []
+            borders = site[1].borders
+            for border in borders:
+                if border is not None:
+                    found = False
+                    if len(newBorders) > 0:
+                        for newBorder in newBorders:
+                            if ((newBorder.start == border.start and 
+                               newBorder.end == border.end) or
+                               (newBorder.end == border.start and 
+                               newBorder.start == border.end)):
+                                found = True
+                                break
+                    if not found:
+                        newBorders.append(border)
+
+            if len(newBorders) > 1:
+                orderedBorders = []
+                orderedBorders.append(newBorders.pop())
+
+                completePoly = True
+                while len(newBorders) > 0:
+                    change = False
+                    for nexBorder in newBorders:
+                        if orderedBorders[-1].end == nexBorder.start:
+                            orderedBorders.append(nexBorder)
+                            newBorders.remove(nexBorder)
+                            change = True
+                            break
+                        elif orderedBorders[-1].end == nexBorder.end:
+                            reversedBorder = Border(nexBorder.end, nexBorder.start)
+                            orderedBorders.append(reversedBorder)
+                            newBorders.remove(nexBorder)
+                            change = True
+                            break
+                    if not change:
+                        #print("Error: in siteDataCleanup / hole in poly")
+                        completePoly = False
+                        break
+
+                if completePoly:
+                    site[1].borders = orderedBorders
+                else:
+                    site[1].borders = newBorders
+            else:
+                site[1].borders = newBorders
+
+
+
+
+    def generateLandmass(self):
+        waterCells = 0
+        cellCount = len(self.worldSites)
+
+        tagerRatio = 0.28
+
+        for site in self.worldSites.items():
+            if site[1].isOcean:
+                waterCells += 1
+
+        curRatio = waterCells / cellCount
+
+        while curRatio < tagerRatio:
+            for site in self.worldSites.items():
+                curRatio = waterCells / cellCount
+                if curRatio > tagerRatio:
+                    break
+                if site[1].isOcean:
+                    neighbourIdx = randrange(len(site[1].neighbours))
+                    potOcean = site[1].neighbours[neighbourIdx]
+                    if not self.worldSites[potOcean].isOcean:
+                        waterCells += 1
+                        self.worldSites[potOcean].isOcean = True;
+
             
     def draw(self, screen):
         for site in self.worldSites.items():
@@ -126,7 +237,7 @@ class Starter(PygameHelper):
         
         
     def draw(self):
-        self.screen.fill((255, 255, 255))
+        self.screen.fill((41, 128, 185))
         
         self.map.draw(self.screen)
             
