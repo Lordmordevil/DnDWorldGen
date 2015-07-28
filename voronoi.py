@@ -7,7 +7,6 @@ class Voronoi:
         self.__do(boundary)
         
     def __do(self, boundary):
-        self.edges = []
         self.points = []
         self.pdict = {}
         
@@ -35,7 +34,7 @@ class Voronoi:
                     self.points.append(Point(btu[0], btu[1]))
                     self.pdict[btu] = bidx
                     
-                self.edges.append(Edge(aidx, bidx))
+                e.setVedge(Edge(aidx, bidx))
             elif boundary is not None and (e.l is not None or e.r is not None):
                 mid = (a+b)/2
                 if e.l is not None:
@@ -49,16 +48,12 @@ class Voronoi:
                 ty = -1
                 
                 if v.x>0:
-                    # pozitiv x fele lep ki
                     tx = (boundary[2]-p.x)/v.x
                 elif v.x<0:
-                    # negativ x fele lep ki
                     tx = (boundary[0]-p.x)/v.x
                 if v.y>0:
-                    # pozitiv y fele lep ki
                     ty = (boundary[3]-p.y)/v.y
                 elif v.y<0:
-                    # negativ y fele lep ki
                     ty = (boundary[1]-p.y)/v.y
                 
                 if tx > 0 or ty > 0:
@@ -81,4 +76,4 @@ class Voronoi:
                         cidx = len(self.points)
                         self.points.append(c.c)
                         self.pdict[ctu] = cidx
-                    self.edges.append(Edge(pidx, cidx))
+                    e.setVedge(Edge(pidx, cidx))

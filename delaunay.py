@@ -20,6 +20,10 @@ class Point:
     def __init__(self, x, y):
         self.x = float(x)
         self.y = float(y)
+
+    @property
+    def key(self):
+        return "Point x:%d,y:%d" % (self.x,self.y)
         
     def dist2(self, p):
         return (self.x-p.x)**2+(self.y-p.y)**2
@@ -65,7 +69,12 @@ class Edge:
         self.b = b
         self.l = l
         self.r = r
-        
+
+        self.vEdge = []
+    
+    def setVedge(self, vedge):
+        self.vEdge.append(vedge)
+
     def set(self, a = None, b = None, l = None, r = None):
         self.a = a
         self.b = b
