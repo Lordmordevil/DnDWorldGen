@@ -148,7 +148,18 @@ class Delaunay:
         self.tri.addEdge(Edge(a, b))
         idx = 0
         
+        printedProgress = 0
+        print(" ")
+        print("             |_________________________________________________|")
+        print("2.2 Progress: ", end="")
+
         while idx < self.tri.edgeCount():
+            curProgress = int((50/self.tri.edgeCount())*idx)
+            if printedProgress < curProgress:
+                for i in range(curProgress - printedProgress):
+                    print("|", end="")
+                    printedProgress = curProgress
+
             e = self.tri.edges[idx]
             for i in range(2):
                 if e.l is None:
