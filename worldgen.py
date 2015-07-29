@@ -18,11 +18,15 @@ class Starter(PygameHelper):
         
     def update(self):
         pass
+            
         
     def keyUp(self, key):
         if key == 118: #pressed V
             self.map.generateLandmass()
-            print("Generating Ocean")
+            print("Generating Land")
+        elif key == 98:  #pressed B
+            self.map.blurMap()
+            print("Blur")
 
         
     def mouseUp(self, button, pos):
@@ -36,7 +40,7 @@ class Starter(PygameHelper):
         
         
     def draw(self):
-        self.screen.fill((41, 128, 185))
+        self.screen.fill((39, 50, 64))
         
         self.map.draw(self.screen)
             

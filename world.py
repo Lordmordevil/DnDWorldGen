@@ -2,7 +2,7 @@ from pygamehelper import *
 from pygame import *
 from vec2d import *
 from math import e, pi, cos, sin, sqrt
-from random import uniform, randrange
+from random import uniform, randrange, choice
 from voronoi import *
 
 class Border:
@@ -16,8 +16,8 @@ class WorldSait:
         self.neighbours = []
         self.borders = []
 
-        self.isOcean = False
-        self.isWater = False
+        self.lockedElevation = False
+        self.elevation = -10
         
     @property
     def name(self):
@@ -31,15 +31,30 @@ class WorldSait:
         self.neighbours.append(neighbourKey)
         self.borders.append(border)
         if border is None:
-            self.isOcean = True
+            self.elevation = -10
+            self.lockedElevation = True
 
     def getColor(self):
-        color = (236, 240, 241)
-        if self.isOcean:
-            color = (41, 128, 185)
-        elif self.isWater:
-            color = (52, 152, 219)
+        color = (39, 50, 64)
+        if self.elevation > -5 and self.elevation < -3:
+            color = (54, 66, 79)
+        elif self.elevation >= -3 and self.elevation < 0:
+            color = (73, 91, 112)
+        elif self.elevation >= 0 and self.elevation < 2:
+            color = (182, 182, 134)
+        elif self.elevation >= 2 and self.elevation < 5:
+            color = (92, 143, 33)
+        elif self.elevation >= 5 and self.elevation < 7:
+            color = (56, 88, 20)
+        elif self.elevation >= 7 and self.elevation < 9:
+            color = (149, 140, 133)
+        elif self.elevation >= 9:
+            color = (238, 238, 238)
         return color
+
+    # def getColor(self): #Marti heatmap
+    #     color = (120 + self.elevation *10, 10, 120 - self.elevation *10)
+    #     return color
 
     def draw(self, screen):
         boundPoints = []
@@ -84,7 +99,7 @@ class WorldMap:
     def generateFrame(self):
         points = []
 
-        self.seedFrame(points, 15)
+        self.seedFrame(points, 25)
         #self.seedFrame(points, 20) # step needs to be calced based on world params
         print("2.  Creating basic triangulation")
         triangulation = Triangulation(points)
@@ -203,16 +218,41 @@ class WorldMap:
             else:
                 site[1].borders = newBorders
 
-
     def generateLandmass(self):
-        for site in self.worldSites.items():
-            shoud = randrange(20) < 4
-            if site[1].isOcean:
-                neighbourIdx = randrange(len(site[1].neighbours))
-                potOcean = site[1].neighbours[neighbourIdx]
-                if not self.worldSites[potOcean].isOcean:
-                    self.worldSites[potOcean].isOcean = True;
+        ceedCount = 3
+        mountainRange = 30
 
+        for ceed in range(ceedCount):
+            rangeMembers = []
+            siteKeys = list(self.worldSites.keys())
+            rangeMembers.append(choice(siteKeys))
+            self.worldSites[rangeMembers[-1]].elevation = 10
+            while len(rangeMembers) < mountainRange:
+                curSite = self.worldSites[rangeMembers[-1]]
+                added = False
+                for neighbour in curSite.neighbours:
+                    if neighbour not in rangeMembers and not self.worldSites[neighbour].lockedElevation:
+                        self.worldSites[neighbour].elevation = 10
+                        rangeMembers.append(neighbour)
+                        added = True
+                        break
+                if not added:
+                    print("Problem with generating mountain range")
+                    break
+
+    def blurMap(self):
+        newElevation = {}
+        for site in self.worldSites.items():
+            if not site[1].lockedElevation:
+                elevationSum = site[1].elevation
+                print(elevationSum)
+                for neighbour in site[1].neighbours:
+                    print(self.worldSites[neighbour].elevation)
+                    elevationSum += self.worldSites[neighbour].elevation
+                newElevation[site[0]] =int(elevationSum/ (len(site[1].neighbours) + 1))
+                print(newElevation[site[0]], " | ")
+        for values in newElevation.items():
+            self.worldSites[values[0]].elevation = values[1]
             
     def draw(self, screen):
         for site in self.worldSites.items():
