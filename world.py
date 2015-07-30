@@ -99,7 +99,7 @@ class WorldMap:
     def generateFrame(self):
         points = []
 
-        self.seedFrame(points, 25)
+        self.seedFrame(points, 15)
         #self.seedFrame(points, 20) # step needs to be calced based on world params
         print("2.  Creating basic triangulation")
         triangulation = Triangulation(points)
@@ -220,11 +220,16 @@ class WorldMap:
 
     def generateLandmass(self):
         ceedCount = 3
-        mountainRange = 30
+        mountainRange = 10
+
+        siteKeys = []
+        #siteKeys = list(self.worldSites.keys())
+        for site in self.worldSites.items():
+            if abs(int(self.size[0]/2) - site[1].center.x) < 200 and abs(int(self.size[1]/2) - site[1].center.y) < 200:
+                siteKeys.append(site[0])
 
         for ceed in range(ceedCount):
             rangeMembers = []
-            siteKeys = list(self.worldSites.keys())
             rangeMembers.append(choice(siteKeys))
             self.worldSites[rangeMembers[-1]].elevation = 10
             while len(rangeMembers) < mountainRange:
@@ -245,12 +250,9 @@ class WorldMap:
         for site in self.worldSites.items():
             if not site[1].lockedElevation:
                 elevationSum = site[1].elevation
-                print(elevationSum)
                 for neighbour in site[1].neighbours:
-                    print(self.worldSites[neighbour].elevation)
                     elevationSum += self.worldSites[neighbour].elevation
                 newElevation[site[0]] =int(elevationSum/ (len(site[1].neighbours) + 1))
-                print(newElevation[site[0]], " | ")
         for values in newElevation.items():
             self.worldSites[values[0]].elevation = values[1]
             
