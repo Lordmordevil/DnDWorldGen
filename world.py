@@ -35,21 +35,30 @@ class WorldSait:
             self.lockedElevation = True
 
     def getColor(self):
-        color = (39, 50, 64)
-        if self.elevation > -5 and self.elevation < -3:
-            color = (54, 66, 79)
-        elif self.elevation >= -3 and self.elevation < 0:
-            color = (73, 91, 112)
-        elif self.elevation >= 0 and self.elevation < 2:
-            color = (182, 182, 134)
-        elif self.elevation >= 2 and self.elevation < 5:
-            color = (92, 143, 33)
-        elif self.elevation >= 5 and self.elevation < 7:
-            color = (56, 88, 20)
-        elif self.elevation >= 7 and self.elevation < 9:
-            color = (149, 140, 133)
-        elif self.elevation >= 9:
-            color = (238, 238, 238)
+        color = (120, 0, 0)
+        elevationColor = {-10: (39, 50, 64),
+                          -9 : (48, 59, 75),
+                          -8 : (56, 68, 85),
+                          -7 : (65, 79, 95),
+                          -6 : (69, 84, 101),
+                          -5 : (58, 82, 126),
+                          -4 : (68, 96, 147),
+                          -3 : (69, 101, 116),
+                          -2 : (77, 111, 128),
+                          -1 : (90, 132, 152),
+                          0  : (191, 193, 123),
+                          1  : (182, 182, 134),
+                          2  : (122, 146, 31),
+                          3  : (92, 143, 33),
+                          4  : (82, 130, 30),
+                          5  : (56, 88, 20),
+                          6  : (41, 66, 15),
+                          7  : (164, 137, 119),
+                          8  : (149, 140, 133),
+                          9  : (219, 219, 219),
+                          10 : (238, 238, 238)}
+        if self.elevation >= -10 and self.elevation <= 10:
+            color = elevationColor[self.elevation]
         return color
 
     # def getColor(self): #Marti heatmap
@@ -219,13 +228,16 @@ class WorldMap:
                 site[1].borders = newBorders
 
     def generateLandmass(self):
-        ceedCount = 3
+        ceedCount = 3 * randrange(3,12)
         mountainRange = 10
+        borderSize = 200
 
         siteKeys = []
         #siteKeys = list(self.worldSites.keys())
         for site in self.worldSites.items():
-            if abs(int(self.size[0]/2) - site[1].center.x) < 200 and abs(int(self.size[1]/2) - site[1].center.y) < 200:
+            if (site[1].center.x > borderSize and site[1].center.x < (self.size[0] - borderSize) and 
+                site[1].center.y > borderSize and site[1].center.y < (self.size[1] - borderSize) and 
+                not site[1].lockedElevation):
                 siteKeys.append(site[0])
 
         for ceed in range(ceedCount):
@@ -244,6 +256,7 @@ class WorldMap:
                 if not added:
                     print("Problem with generating mountain range")
                     break
+        self.blurMap()
 
     def blurMap(self):
         newElevation = {}
@@ -255,6 +268,12 @@ class WorldMap:
                 newElevation[site[0]] =int(elevationSum/ (len(site[1].neighbours) + 1))
         for values in newElevation.items():
             self.worldSites[values[0]].elevation = values[1]
+
+    def reset(self):
+        for site in self.worldSites.items():
+            if not site[1].lockedElevation:
+                site[1].elevation = -10
+
             
     def draw(self, screen):
         for site in self.worldSites.items():

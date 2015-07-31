@@ -21,12 +21,16 @@ class Starter(PygameHelper):
             
         
     def keyUp(self, key):
+        print(key)
         if key == 118: #pressed V
             self.map.generateLandmass()
             print("Generating Land")
         elif key == 98:  #pressed B
             self.map.blurMap()
             print("Blur")
+        elif key == 114: #pressed R
+            self.map.reset()
+            print("Reset Elevation")
 
         
     def mouseUp(self, button, pos):
