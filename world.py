@@ -65,7 +65,7 @@ class WorldSait:
     #     color = (120 + self.elevation *10, 10, 120 - self.elevation *10)
     #     return color
 
-    def draw(self, screen):
+    def draw(self, screen, offset, zoom):
         boundPoints = []
         shouldDrawPoly = True;
 
@@ -75,12 +75,12 @@ class WorldSait:
         for border in self.borders:
             if shouldDrawPoly:
                 if len(boundPoints) == 0:
-                    boundPoints.append([int(border.start.x), int(border.start.y)])
-                boundPoints.append([int(border.end.x), int(border.end.y)])
+                    boundPoints.append([int((border.start.x + offset[0]) * zoom), int((border.start.y + offset[1]) * zoom)])
+                boundPoints.append([int((border.end.x + offset[0]) * zoom), int((border.end.y + offset[1]) * zoom)])
             #pygame.draw.line(screen, (0, 200, 0), (int(border.start.x), int(border.start.y)), (int(border.end.x), int(border.end.y)), 1)
         if shouldDrawPoly:
             pygame.draw.polygon(screen, self.getColor(), boundPoints)
-        pygame.draw.circle(screen, (200, 0, 0), (int(self.center.x), int(self.center.y)), 2, 1)
+        pygame.draw.circle(screen, (200, 0, 0), (int((self.center.x + offset[0]) * zoom), int((self.center.y + offset[1]) * zoom)), 2, 1)
 
 
 class WorldMap:
@@ -92,13 +92,8 @@ class WorldMap:
 
         self.generateFrame()
         self.siteDataCleanup()
-        print(" ")
-        print("6.  Generating ocean sites")
-        print("6.1 Press -V- untill you like it")
-        #self.generateLandmass()
 
     def seedFrame(self, points, step):
-        print("1.  Ceeding frame with points")
         for i in range(step, self.size[0] - step, step):
             for j in range(step, self.size[1] - step , step):
                 offsetX = randrange(step - 2) - int(step / 2)
@@ -109,34 +104,16 @@ class WorldMap:
         points = []
 
         self.seedFrame(points, 15)
-        #self.seedFrame(points, 20) # step needs to be calced based on world params
-        print("2.  Creating basic triangulation")
         triangulation = Triangulation(points)
-        print("2.1 Refine triangulation")
         delaunay = Delaunay(triangulation)
-        print(" ")
-        print("3.  Calculating voronoi cells")
         voronoi = Voronoi(triangulation, (0,0, self.size[0], self.size[1]))
 
         if delaunay is None or voronoi is None:
             print("Error: in generateFrame")
             return
 
-        print(" ")
-        print("4.  Mapping output to world map")
-        edgesDone = 0
-        printedProgress = 0
-        print("             |_________________________________________________|")
-        print("4.  Progress: ", end="")
 
         for trEdge in triangulation.edges:
-            curProgress = int((50/len(triangulation.edges))*edgesDone)
-            if printedProgress < curProgress:
-                for i in range(curProgress - printedProgress):
-                    print("|", end="")
-                    printedProgress = curProgress
-            edgesDone += 1
-
             centerOne = points[trEdge.a]
             centerTwo = points[trEdge.b]
             if centerOne.key not in self.worldSites:
@@ -164,22 +141,8 @@ class WorldMap:
 
     def siteDataCleanup(self):
         #Cleanup borders
-        print(" ")
-        print("5.  Cleanup world site data")
-
-        sitesDone = 0
-        printedProgress = 0
-        print("             |_________________________________________________|")
-        print("5.  Progress: ", end="")
 
         for site in self.worldSites.items():
-            curProgress = int((50/len(self.worldSites.items()))*sitesDone)
-            if printedProgress < curProgress:
-                for i in range(curProgress - printedProgress):
-                    print("|", end="")
-                    printedProgress = curProgress
-            sitesDone += 1
-
             newBorders = []
             borders = site[1].borders
             for border in borders:
@@ -275,6 +238,6 @@ class WorldMap:
                 site[1].elevation = -10
 
             
-    def draw(self, screen):
+    def draw(self, screen, offset, zoom):
         for site in self.worldSites.items():
-            site[1].draw(screen)
+            site[1].draw(screen, offset, zoom)

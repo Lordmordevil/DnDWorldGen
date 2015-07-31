@@ -10,18 +10,7 @@ class Voronoi:
         self.points = []
         self.pdict = {}
         
-        edgesDone = 0
-        printedProgress = 0
-        print("             |_________________________________________________|")
-        print("3.  Progress: ", end="")
         for e in self.tri.edges:
-            curProgress = int((50/len(self.tri.edges))*edgesDone)
-            if printedProgress < curProgress:
-                for i in range(curProgress - printedProgress):
-                    print("|", end="")
-                    printedProgress = curProgress
-            edgesDone += 1
-
             a = self.tri.points[e.a]
             b = self.tri.points[e.b]
             
