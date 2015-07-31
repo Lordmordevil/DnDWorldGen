@@ -155,6 +155,7 @@ class Delaunay:
                     self.makeLeftTriangle(e)
                 e.swap()
             idx += 1
+        print("For: ", self.tri.pointCount(), " point we have: ", self.tri.edgeCount(), " edges")
         
     def findNearest2(self):
         n = self.tri.pointCount()
