@@ -29,7 +29,6 @@ class Starter(PygameHelper):
             
         
     def keyUp(self, key):
-        print(key)
         if key == 118: #pressed V
             self.map.generateLandmass()
             print("Generating Land")
@@ -45,7 +44,7 @@ class Starter(PygameHelper):
         elif key == 109: #pressed M
             self.viewProps["DrawWorld"] = not self.viewProps["DrawWorld"]
             print("Map mode")
-        elif key == 100: #pressed D da se smeni s N
+        elif key == 110: #pressed N
             print("Next site: ", self.tileIdx)
             self.tileIdx += 1
         if key == 269:
