@@ -81,7 +81,7 @@ class Starter(PygameHelper):
             self.map.drawSite(self.screen, self.viewProps, self.tileIdx)
         elif self.viewProps["DrawMode"] == 2:
             self.screen.fill((0, 0, 0))
-            self.map.drawRiver(self.screen, self.viewProps, self.tileIdx)
+            self.map.drawRiver(self.screen, self.getOffset(), self.zoom, self.viewProps, self.tileIdx)
             
 
 s = Starter()
