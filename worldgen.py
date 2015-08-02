@@ -9,7 +9,7 @@ class Starter(PygameHelper):
     def __init__(self):
         self.w, self.h = 1600, 900
         self.offset = [0,0]
-        self.viewProps = {"ShowPoints" : False , "DrawWorld" : True}
+        self.viewProps = {"ShowPoints" : False , "DrawMode" : 0}
         self.zoom = 1
         PygameHelper.__init__(self, size=(self.w, self.h), fill=((255,255,255)))
 
@@ -37,12 +37,15 @@ class Starter(PygameHelper):
             print("Generate rivers")
         elif key == 114: #pressed R
             self.map.reset()
+            self.tileIdx = 0
             print("Reset Elevation")
         elif key == 112: #pressed P
             self.viewProps["ShowPoints"] = not self.viewProps["ShowPoints"]
             print("Show points")
         elif key == 109: #pressed M
-            self.viewProps["DrawWorld"] = not self.viewProps["DrawWorld"]
+            self.viewProps["DrawMode"] += 1
+            if self.viewProps["DrawMode"] == 3:
+                self.viewProps["DrawMode"] = 0
             print("Map mode")
         elif key == 110: #pressed N
             print("Next site: ", self.tileIdx)
@@ -52,13 +55,13 @@ class Starter(PygameHelper):
         if key == 270:
             self.zoom *= 1.5
         if key == 273:
-            self.offset[1] -= 10/self.zoom
-        if key == 274:
             self.offset[1] += 10/self.zoom
+        if key == 274:
+            self.offset[1] -= 10/self.zoom
         if key == 275:
-            self.offset[0] += 10/self.zoom
-        if key == 276:
             self.offset[0] -= 10/self.zoom
+        if key == 276:
+            self.offset[0] += 10/self.zoom
 
         
     def mouseUp(self, button, pos):
@@ -70,12 +73,15 @@ class Starter(PygameHelper):
         
         
     def draw(self):
-        if self.viewProps["DrawWorld"]:
+        if self.viewProps["DrawMode"] == 0:
             self.screen.fill((39, 50, 64))
             self.map.draw(self.screen, self.getOffset(), self.zoom, self.viewProps)
-        else:
+        elif self.viewProps["DrawMode"] == 1:
             self.screen.fill((0, 0, 0))
             self.map.drawSite(self.screen, self.viewProps, self.tileIdx)
+        elif self.viewProps["DrawMode"] == 2:
+            self.screen.fill((0, 0, 0))
+            self.map.drawRiver(self.screen, self.viewProps, self.tileIdx)
             
 
 s = Starter()

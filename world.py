@@ -42,6 +42,12 @@ class WorldSait:
             self.elevation = -10
             self.lockedElevation = True
 
+    def hasNeighbour(self, neighbourID):
+        for neighbour in self.neighbours:
+            if neighbour == neighbourID:
+                return True
+        return False
+
     def getColor(self):
         color = (120, 0, 0)
         elevationColor = {-10: (39, 50, 64),
@@ -91,7 +97,8 @@ class WorldSait:
             if border.isRiver:
                 start = (int((border.start.x + offset[0]) * zoom), int((border.start.y+ offset[1]) * zoom))
                 end = (int((border.end.x + offset[0]) * zoom), int((border.end.y+ offset[1]) * zoom))
-                pygame.draw.line(screen, (90, 132, 152), start, end, 2)
+                #pygame.draw.line(screen, (90, 132, 152), start, end, 2)
+                pygame.draw.line(screen, (125, 0, 0), start, end, 2)
 
     def drawBorders(self, screen, offset, zoom, viewProps):
         idx = 0
@@ -109,6 +116,8 @@ class WorldMap:
         self.size = size
 
         self.worldSites = {}
+
+        self.rivers = []
 
     def generate(self):
 
@@ -219,6 +228,7 @@ class WorldMap:
                             newBorders.remove(nexBorder)
                             change = True
                             break
+                        idx += 1
                     if not change:
                         #print("Error: in siteDataCleanup / hole in poly")
                         completePoly = False
@@ -292,19 +302,111 @@ class WorldMap:
                 break
 
     def generateRivers(self):
+        self.rivers = []
         self.markOceans()
         self.calcBorderElevation()
         for site in self.worldSites.items():
             if site[1].elevation in range(3):
-                neighbouringOceans = 0
+                neighbouringOcean = None
                 idx = 0
                 for neighbour in site[1].neighbours:
-                    if self.worldSites[neighbour].isOcean:
-                        neighbouringOceans += 1
-                    elif neighbouringOceans > 1 and self.worldSites[neighbour].elevation >= 0:
-                        site[1].borders[idx].isRiver = True
+                    if self.worldSites[neighbour].isOcean and neighbouringOcean == None:
+                        neighbouringOcean = neighbour
                         break
-                    idx += 1
+                if neighbouringOcean != None:
+                    for neighbour in site[1].neighbours:
+                        if self.worldSites[neighbour].hasNeighbour(neighbouringOcean) and self.worldSites[neighbour].elevation >= 0:
+                            site[1].borders[idx].isRiver = True
+                            newRiver = []
+                            newRiver.append((site[0], idx, site[1].borders[idx]))
+                            self.rivers.append(newRiver)
+                            self.buildRiver(site[0], neighbour, newRiver, self.rivers)
+                            break
+                        idx += 1
+
+        for river in self.rivers:
+            if len(river) > 3:
+                for part in river:
+                    self.worldSites[part[0]].borders[part[1]].isRiver = True
+            else:
+                self.rivers.remove(river)
+        print("Result:")
+        print("Rivers: ", len(self.rivers))
+
+
+    def buildRiver(self, siteOneID, siteTwoID, river, allRivers):
+        oldRiverPiece = river[-1][2]
+        saiteL = self.worldSites[siteOneID]
+        saiteR = self.worldSites[siteTwoID]
+        borderLeft = 0
+        borderRight = 0
+        leftReversed = False
+        rightReversed = False
+
+        for bordrderL in saiteL.borders:
+            if oldRiverPiece.end == bordrderL.start and oldRiverPiece.start != bordrderL.end:
+                break
+            elif oldRiverPiece.end == bordrderL.end and oldRiverPiece.start != bordrderL.start:
+                leftReversed = True
+                break
+            borderLeft += 1
+
+        for bordrderR in saiteR.borders:
+            if oldRiverPiece.end == bordrderR.start and oldRiverPiece.start != bordrderR.end:
+                break
+            elif oldRiverPiece.end == bordrderR.end and oldRiverPiece.start != bordrderR.start:
+                rightReversed = True
+                break
+            borderRight += 1
+
+        if (
+                borderLeft < len(saiteL.borders) and borderRight < len(saiteR.borders) and 
+                saiteL.borders[borderLeft].elevation >= oldRiverPiece.elevation and 
+                saiteR.borders[borderRight].elevation >= oldRiverPiece.elevation and 
+                randrange(20) < 2
+            ):
+            #generate both
+            if leftReversed:
+                reversedBorder = Border(saiteL.borders[borderLeft].end, saiteL.borders[borderLeft].start)
+                reversedBorder.elevation = saiteL.borders[borderLeft].elevation
+                river.append((siteOneID, borderLeft, reversedBorder))
+            else:
+                river.append((siteOneID, borderLeft, saiteL.borders[borderLeft]))
+            self.buildRiver(siteTwoID, saiteL.neighbours[borderLeft], river, allRivers)
+
+            newRiverGen = []
+            if rightReversed:
+                reversedBorder = Border(saiteR.borders[borderRight].end, saiteR.borders[borderRight].start)
+                reversedBorder.elevation = saiteR.borders[borderRight].elevation
+                newRiverGen.append((siteTwoID, borderRight, reversedBorder))
+            else:
+                newRiverGen.append((siteTwoID, borderRight, saiteR.borders[borderRight]))
+            allRivers.append(newRiverGen)
+            self.buildRiver(siteTwoID, saiteR.neighbours[borderRight], newRiverGen, allRivers)
+
+        elif (
+                borderLeft < len(saiteL.borders) and borderRight < len(saiteR.borders) and 
+                saiteL.borders[borderLeft].elevation > saiteR.borders[borderRight].elevation and
+                saiteL.borders[borderLeft].elevation >= oldRiverPiece.elevation
+            ):
+            #generate left
+            if leftReversed:
+                reversedBorder = Border(saiteL.borders[borderLeft].end, saiteL.borders[borderLeft].start)
+                reversedBorder.elevation = saiteL.borders[borderLeft].elevation
+                river.append((siteOneID, borderLeft, reversedBorder))
+            else:
+                river.append((siteOneID, borderLeft, saiteL.borders[borderLeft]))
+            self.buildRiver(siteTwoID, saiteL.neighbours[borderLeft], river, allRivers)
+        elif borderRight < len(saiteR.borders) and saiteR.borders[borderRight].elevation >= oldRiverPiece.elevation:
+            #generate right
+            if rightReversed:
+                reversedBorder = Border(saiteR.borders[borderRight].end, saiteR.borders[borderRight].start)
+                reversedBorder.elevation = saiteR.borders[borderRight].elevation
+                river.append((siteTwoID, borderRight, reversedBorder))
+            else:
+                river.append((siteTwoID, borderRight, saiteR.borders[borderRight]))
+            self.buildRiver(siteTwoID, saiteR.neighbours[borderRight], river, allRivers)
+
 
 
     def blurMap(self):
@@ -356,3 +458,31 @@ class WorldMap:
             siteMarkerPos = (int((self.worldSites[neighbour].center.x + offsetSite[0]) * zoom), int((self.worldSites[neighbour].center.y + offsetSite[1]) * zoom))
             pygame.draw.circle(screen, (24 * idx, 240 - 24 * idx, 3 * idx), siteMarkerPos, 5)
             idx += 1
+
+    def drawRiver(self, screen, viewProps, siteIdx):
+        curRiver = self.rivers[siteIdx]
+
+        topLeft = [self.size[0], self.size[1]]
+        bottomRight = [0, 0]
+
+        for riverPart in curRiver:
+            if self.worldSites[riverPart[0]].center.x < topLeft[0]:
+                topLeft[0] = self.worldSites[riverPart[0]].center.x
+            if self.worldSites[riverPart[0]].center.y < topLeft[1]:
+                topLeft[1] = self.worldSites[riverPart[0]].center.y
+            if self.worldSites[riverPart[0]].center.x > bottomRight[0]:
+                bottomRight[0] = self.worldSites[riverPart[0]].center.x
+            if self.worldSites[riverPart[0]].center.y > bottomRight[1]:
+                bottomRight[1] = self.worldSites[riverPart[0]].center.y
+
+        zoom = self.size[1] / (bottomRight[1] - topLeft[1] + 90)
+        offset = [40 - topLeft[0], 40 - topLeft[1]]
+
+        for riverPart in curRiver:
+            curSite = self.worldSites[riverPart[0]]
+            curSite.draw(screen, offset, zoom, viewProps)
+        for riverPart in curRiver:
+            curRiverPart = riverPart[2]
+            start = (int((curRiverPart.start.x + offset[0]) * zoom), int((curRiverPart.start.y+ offset[1]) * zoom))
+            end = (int((curRiverPart.end.x + offset[0]) * zoom), int((curRiverPart.end.y+ offset[1]) * zoom))
+            pygame.draw.line(screen, (125, 0, 0), start, end, 4)
