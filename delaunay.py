@@ -1,4 +1,5 @@
 import math
+from vec2d import vec2d
 
 def cross(a, b, c):
     """Cross product of 2D vectors defined by three points.
@@ -14,54 +15,20 @@ def cross(a, b, c):
 def det3(r11,r12,r13,r21,r22,r23,r31,r32,r33):
     """Determinant of a 3x3 matrix"""
     return r11*(r22*r33-r23*r32)-r12*(r21*r33-r23*r31)+r13*(r21*r32-r22*r31)
-
-class Point:
-    """2D point/vector with float coordinates"""
-    def __init__(self, x, y):
-        self.x = float(x)
-        self.y = float(y)
-
-    @property
-    def key(self):
-        return "Point x:%d,y:%d" % (self.x,self.y)
-        
-    def dist2(self, p):
-        return (self.x-p.x)**2+(self.y-p.y)**2
-        
-    def dist(self, p):
-        return math.sqrt((self.x-p.x)**2+(self.y-p.y)**2)
-        
-    def len2(self):
-        return self.x**2+self.y**2
-        
-    def __add__(self, other):
-        return Point(self.x+other.x, self.y+other.y)
-        
-    def __sub__(self, other):
-        return Point(self.x-other.x, self.y-other.y)
-        
-    def __mul__(self, other):
-        return Point(self.x * float(other), self.y * float(other))
-        
-    def __truediv__(self, other):
-        return Point(self.x / float(other), self.y / float(other))
-        
-    def __str__(self):
-        return "(%f, %f)" % (self.x, self.y)
         
 class Circle:
     """http://mathworld.wolfram.com/Circumcircle.html"""
     def __init__(self, a, b, c):
         det_a  =  det3(a.x, a.y, 1, b.x, b.y, 1, c.x, c.y, 1)
-        det_bx = -det3(a.len2(), a.y, 1, b.len2(), b.y, 1, c.len2(), c.y, 1)
-        det_by =  det3(a.len2(), a.x, 1, b.len2(), b.x, 1, c.len2(), c.x, 1)
-        det_c  = -det3(a.len2(), a.x, a.y, b.len2(), b.x, b.y, c.len2(), c.x, c.y)
-        self.c = Point(-det_bx/(2*det_a), -det_by/(2*det_a))
-        self.r = self.c.dist(a)
+        det_bx = -det3(a.get_length_sqrd(), a.y, 1, b.get_length_sqrd(), b.y, 1, c.get_length_sqrd(), c.y, 1)
+        det_by =  det3(a.get_length_sqrd(), a.x, 1, b.get_length_sqrd(), b.x, 1, c.get_length_sqrd(), c.x, 1)
+        det_c  = -det3(a.get_length_sqrd(), a.x, a.y, b.get_length_sqrd(), b.x, b.y, c.get_length_sqrd(), c.x, c.y)
+        self.c = vec2d(-det_bx/(2*det_a), -det_by/(2*det_a))
+        self.r = self.c.get_distance(a)
         self.r2 = self.r**2
         
     def inside(self, p):
-        return self.r2 > self.c.dist2(p)
+        return self.r2 > self.c.get_dist_sqrd(p)
         
 class Edge:
     def __init__(self, a = None, b = None, l = None, r = None):
@@ -160,10 +127,10 @@ class Delaunay:
     def findNearest2(self):
         n = self.tri.pointCount()
         (a, b) = (0, 1)
-        mind = self.tri.points[a].dist2(self.tri.points[b])
+        mind = self.tri.points[a].get_dist_sqrd(self.tri.points[b])
         for i in range(n):
             for j in range(i+1, n):
-                d = self.tri.points[i].dist2(self.tri.points[j])
+                d = self.tri.points[i].get_dist_sqrd(self.tri.points[j])
                 if d < mind:
                     mind = d
                     (a, b) = (i, j)

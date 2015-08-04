@@ -1,9 +1,9 @@
 from pygamehelper import *
 from pygame import *
-from vec2d import *
 from math import e, pi, cos, sin, sqrt
 from random import uniform, randrange, choice
 from voronoi import *
+from vec2d import vec2d
 
 import pickle
 
@@ -120,12 +120,12 @@ class WorldMap:
 
     def generate(self):
 
-        # outfile = open('data.txt', 'wb')
-        # self.generateFrame()
-        # pickle.dump(self.worldSites, outfile)
+        outfile = open('data.txt', 'wb')
+        self.generateFrame()
+        pickle.dump(self.worldSites, outfile)
 
-        outfile = open('data.txt', 'rb')
-        self.worldSites = pickle.load(outfile)
+        # outfile = open('data.txt', 'rb')
+        # self.worldSites = pickle.load(outfile)
 
         self.siteDataCleanup()
 
@@ -134,7 +134,7 @@ class WorldMap:
             for j in range(step, self.size[1] - step , step):
                 offsetX = randrange(step - 2) - int(step / 2)
                 offsetY = randrange(step - 2) - int(step / 2)
-                points.append(Point(i + offsetX, j + offsetY))
+                points.append(vec2d(i + offsetX, j + offsetY))
 
     def generateFrame(self):
         points = []

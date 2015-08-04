@@ -1,4 +1,5 @@
 from delaunay import *
+from vec2d import vec2d
 
 class Voronoi:
     def __init__(self, tri, boundary = None):
@@ -24,14 +25,14 @@ class Voronoi:
                     aidx = self.pdict[atu]
                 else:
                     aidx = len(self.points)
-                    self.points.append(Point(atu[0], atu[1]))
+                    self.points.append(vec2d(atu[0], atu[1]))
                     self.pdict[atu] = aidx
                     
                 if btu in self.pdict:
                     bidx = self.pdict[btu]
                 else:
                     bidx = len(self.points)
-                    self.points.append(Point(btu[0], btu[1]))
+                    self.points.append(vec2d(btu[0], btu[1]))
                     self.pdict[btu] = bidx
                     
                 e.setVedge(Edge(aidx, bidx))

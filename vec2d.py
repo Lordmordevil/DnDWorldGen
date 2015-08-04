@@ -7,6 +7,10 @@ class vec2d(object):
        """
     __slots__ = ['x', 'y']
  
+    @property
+    def key(self):
+        return "Point x:%d,y:%d" % (self.x,self.y)
+ 
     def __init__(self, x_or_pair, y = None):
         if y == None:
             self.x = x_or_pair[0]
