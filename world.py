@@ -13,8 +13,39 @@ class Border:
         self.end = end
         self.elevation = None
 
+        self.parts = [(self.start, self.end)]
+
         self.isRiver = False
         self.riverWidth = 1
+
+    def subDevide(self, offsetSize):
+        newParts = []
+        for part in self.parts:
+            if part[0] != part[1]:
+                middle = (part[0] + part[1])/2
+                direct = (part[1] - part[0]).perpendicular_normal()
+                newLen = randrange(-1 * offsetSize, offsetSize)
+                if newLen == 0:
+                    newLen = choice([-1, 1])
+                direct.length = newLen
+                newMiddle = middle + direct
+                newParts.extend([(part[0], newMiddle), (newMiddle, part[1])])
+        self.parts = newParts
+
+    def getReversedParts(self):
+        reversedParts = []
+        for part in reversed(self.parts):
+            reversedParts.append((part[1], part[0]))
+        return reversedParts
+
+    def draw(self, screen, offset, zoom, viewProps):
+        for part in self.parts:
+            start = (int((part[0].x + offset[0]) * zoom), int((part[0].y+ offset[1]) * zoom))
+            end = (int((part[1].x + offset[0]) * zoom), int((part[1].y+ offset[1]) * zoom))
+            if viewProps["DrawMode"] == 1:
+                pygame.draw.line(screen, (0, 0, 0), start, end, 4)
+            elif self.isRiver:
+                pygame.draw.line(screen, (90, 132, 152), start, end, self.riverWidth+1)
 
 class WorldSait:
     def __init__(self, center):
@@ -82,30 +113,21 @@ class WorldSait:
         if len(self.borders) < 2:
             shouldDrawPoly = False
 
-        for border in self.borders:
-            if shouldDrawPoly:
-                if len(boundPoints) == 0:
-                    boundPoints.append([int((border.start.x + offset[0]) * zoom), int((border.start.y + offset[1]) * zoom)])
-                boundPoints.append([int((border.end.x + offset[0]) * zoom), int((border.end.y + offset[1]) * zoom)])
+        if shouldDrawPoly:
+            for border in self.borders:
+                for part in border.parts:
+                    if len(boundPoints) == 0:
+                        boundPoints.append([int((part[0].x + offset[0]) * zoom), int((part[0].y + offset[1]) * zoom)])
+                    boundPoints.append([int((part[1].x + offset[0]) * zoom), int((part[1].y + offset[1]) * zoom)])
         if shouldDrawPoly:
             pygame.draw.polygon(screen, self.getColor(), boundPoints)
         if viewProps["ShowPoints"]:
             pygame.draw.circle(screen, (200, 0, 0), (int((self.center.x + offset[0]) * zoom), int((self.center.y + offset[1]) * zoom)), 2, 1)
 
-    def drawRivers(self, screen, offset, zoom, viewProps):
-        for border in self.borders:
-            if border.isRiver:
-                start = (int((border.start.x + offset[0]) * zoom), int((border.start.y+ offset[1]) * zoom))
-                end = (int((border.end.x + offset[0]) * zoom), int((border.end.y+ offset[1]) * zoom))
-                pygame.draw.line(screen, (90, 132, 152), start, end, border.riverWidth+1)
-
     def drawBorders(self, screen, offset, zoom, viewProps):
-        idx = 0
         for border in self.borders:
-            start = (int((border.start.x + offset[0]) * zoom), int((border.start.y+ offset[1]) * zoom))
-            end = (int((border.end.x + offset[0]) * zoom), int((border.end.y+ offset[1]) * zoom))
-            pygame.draw.line(screen, (24 * idx, 240 - 24 * idx, 3 * idx), start, end, 4)
-            idx += 1
+            border.draw(screen, offset, zoom, viewProps)
+            
 
 
 
@@ -120,12 +142,12 @@ class WorldMap:
 
     def generate(self):
 
-        outfile = open('data.txt', 'wb')
-        self.generateFrame()
-        pickle.dump(self.worldSites, outfile)
+        # outfile = open('data.txt', 'wb')
+        # self.generateFrame()
+        # pickle.dump(self.worldSites, outfile)
 
-        # outfile = open('data.txt', 'rb')
-        # self.worldSites = pickle.load(outfile)
+        outfile = open('data.txt', 'rb')
+        self.worldSites = pickle.load(outfile)
 
         self.siteDataCleanup()
 
@@ -365,7 +387,26 @@ class WorldMap:
                     width -= 1
         print("Result:")
         print("Rivers: ", len(self.rivers))
+        self.smoothBorders()
+        
 
+    def smoothBorders(self):
+        for site in self.worldSites.items():
+            neighbourIdx = 0
+            for border in site[1].borders:
+                neighbourId = site[1].neighbours[neighbourIdx]
+                neighbour = self.worldSites[neighbourId]
+                if site[1].getColor() != neighbour.getColor():
+                    border.subDevide(1)
+                    if site[0] in neighbour.neighbours:
+                        borderMirrorIdx = neighbour.neighbours.index(site[0])
+                        if border.start == neighbour.borders[borderMirrorIdx].start:
+                            neighbour.borders[borderMirrorIdx].parts = site[1].borders[neighbourIdx].parts
+                        else:
+                            neighbour.borders[borderMirrorIdx].parts = site[1].borders[neighbourIdx].getReversedParts()
+                    else:
+                        print(neighbour.key)
+                neighbourIdx += 1
 
     def buildRiver(self, siteOneID, siteTwoID, river, allRivers):
         oldRiverPiece = river[-1][2]
@@ -447,7 +488,7 @@ class WorldMap:
         for site in self.worldSites.items():
             # if (site[1].center.x in range(offset[0], int(self.size[0]*zoom) + 20) and 
             # site[1].center.y in range(offset[1], int(self.size[1]*zoom) + 20)):
-            site[1].drawRivers(screen, offset, zoom, viewProps)
+            site[1].drawBorders(screen, offset, zoom, viewProps)
 
     def drawSite(self, screen, viewProps, siteIdx):
         siteKey = list(self.worldSites.keys())[siteIdx]
@@ -456,7 +497,6 @@ class WorldMap:
         offset = [40 - curSite.center.x, 40 - curSite.center.y]
         curSite.draw(screen, offset, zoom, viewProps)
         curSite.drawBorders(screen, offset, zoom, viewProps)
-        curSite.drawRivers(screen, offset, zoom, viewProps)
         idx = 0
         for neighbour in curSite.neighbours:
             offsetSite = [0, 0]
@@ -471,7 +511,7 @@ class WorldMap:
         for site in self.worldSites.items():
             site[1].draw(screen, offset, zoom, viewProps)
         for site in self.worldSites.items():
-            site[1].drawRivers(screen, offset, zoom, viewProps)
+            site[1].drawBorders(screen, offset, zoom, viewProps)
 
         curRiver = self.rivers[siteIdx]
         print("Stats: ", len(curRiver), abs(curRiver[-1][2].elevation - curRiver[0][2].elevation))
