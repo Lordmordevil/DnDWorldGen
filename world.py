@@ -24,10 +24,12 @@ class Border:
             if part[0] != part[1]:
                 middle = (part[0] + part[1])/2
                 direct = (part[1] - part[0]).perpendicular_normal()
-                newLen = randrange(-1 * offsetSize, offsetSize)
+                newLen = randrange(-1 * offsetSize, offsetSize)/10
                 if newLen == 0:
-                    newLen = choice([-1, 1])
+                    newLen = choice([-0.1, 0.1])
                 direct.length = newLen
+                direct.x = int(direct.x)
+                direct.y = int(direct.y)
                 newMiddle = middle + direct
                 newParts.extend([(part[0], newMiddle), (newMiddle, part[1])])
         self.parts = newParts
@@ -272,6 +274,8 @@ class WorldMap:
         mountainRange = 10
         borderSize = 200
 
+        ceedHight = 11
+
         siteKeys = []
         #siteKeys = list(self.worldSites.keys())
         for site in self.worldSites.items():
@@ -283,13 +287,13 @@ class WorldMap:
         for ceed in range(ceedCount):
             rangeMembers = []
             rangeMembers.append(choice(siteKeys))
-            self.worldSites[rangeMembers[-1]].elevation = 10
+            self.worldSites[rangeMembers[-1]].elevation = ceedHight
             while len(rangeMembers) < mountainRange:
                 curSite = self.worldSites[rangeMembers[-1]]
                 added = False
                 for neighbour in curSite.neighbours:
                     if neighbour not in rangeMembers and not self.worldSites[neighbour].lockedElevation:
-                        self.worldSites[neighbour].elevation = 10
+                        self.worldSites[neighbour].elevation = ceedHight
                         rangeMembers.append(neighbour)
                         added = True
                         break
@@ -397,7 +401,7 @@ class WorldMap:
                 neighbourId = site[1].neighbours[neighbourIdx]
                 neighbour = self.worldSites[neighbourId]
                 if site[1].getColor() != neighbour.getColor():
-                    border.subDevide(1)
+                    border.subDevide(8)
                     if site[0] in neighbour.neighbours:
                         borderMirrorIdx = neighbour.neighbours.index(site[0])
                         if border.start == neighbour.borders[borderMirrorIdx].start:
