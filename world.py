@@ -401,7 +401,7 @@ class WorldMap:
                 neighbourId = site[1].neighbours[neighbourIdx]
                 neighbour = self.worldSites[neighbourId]
                 if site[1].getColor() != neighbour.getColor():
-                    border.subDevide(8)
+                    border.subDevide(12)
                     if site[0] in neighbour.neighbours:
                         borderMirrorIdx = neighbour.neighbours.index(site[0])
                         if border.start == neighbour.borders[borderMirrorIdx].start:

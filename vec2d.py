@@ -10,7 +10,7 @@ class vec2d(object):
     @property
     def key(self):
         return "Point x:%d,y:%d" % (self.x,self.y)
- 
+
     def __init__(self, x_or_pair, y = None):
         if y == None:
             self.x = x_or_pair[0]
@@ -324,7 +324,13 @@ class vec2d(object):
     
     def convert_to_basis(self, x_vector, y_vector):
         return vec2d(self.dot(x_vector)/x_vector.get_length_sqrd(), self.dot(y_vector)/y_vector.get_length_sqrd())
- 
+
+    def is_between_vectors(self, left, right):
+        if left.cross(right) >= 0:
+            return right.cross(self) > 0 and self.cross(left) > 0
+        else:
+            return right.cross(self) > 0 or self.cross(left) > 0
+
     def __getstate__(self):
         return [self.x, self.y]
         
