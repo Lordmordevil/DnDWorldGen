@@ -131,27 +131,10 @@ class WorldSait:
             border.draw(screen, offset, zoom, viewProps)
             
 
-
-
-class WorldMap:
+class WorldFrame:
     def __init__(self, seed, size):
         self.seed = seed
         self.size = size
-
-        self.worldSites = {}
-
-        self.rivers = []
-
-    def generate(self):
-
-        # outfile = open('data.txt', 'wb')
-        # self.generateFrame()
-        # pickle.dump(self.worldSites, outfile)
-
-        outfile = open('data.txt', 'rb')
-        self.worldSites = pickle.load(outfile)
-
-        self.siteDataCleanup()
 
     def seedFrame(self, points, step):
         for i in range(step, self.size[0] - step, step):
@@ -160,7 +143,7 @@ class WorldMap:
                 offsetY = randrange(step - 2) - int(step / 2)
                 points.append(vec2d(i + offsetX, j + offsetY))
 
-    def generateFrame(self):
+    def generate(self):
         points = []
 
         self.seedFrame(points, 15)
@@ -171,7 +154,6 @@ class WorldMap:
         if delaunay is None or voronoi is None:
             print("Error: in generateFrame")
             return
-
 
         for trEdge in triangulation.edges:
             centerOne = points[trEdge.a]
@@ -199,10 +181,9 @@ class WorldMap:
             siteOne.addNeighbour(siteTwo.key, border)
             siteTwo.addNeighbour(siteOne.key, border)
 
-    def siteDataCleanup(self):
+    def siteDataCleanup(self, worldSites):
         #Cleanup borders
-
-        for site in self.worldSites.items():
+        for site in worldSites.items():
             newBorders = []
             newNeghbours = []
             borders = site[1].borders
@@ -268,6 +249,32 @@ class WorldMap:
             else:
                 site[1].borders = newBorders
                 site[1].neighbours = newNeghbours
+
+    def saveFrame(self):
+        outfile = open('data.txt', 'wb')
+        worldSites = self.generateFrame()
+        pickle.dump(worldSites, outfile)
+
+    def loadFrame(self):
+        outfile = open('data.txt', 'rb')
+        worldSites = pickle.load(outfile)
+        self.siteDataCleanup(worldSites)
+        return worldSites
+
+
+
+class WorldMap:
+    def __init__(self, seed, size, frame):
+        self.seed = seed
+        self.size = size
+
+        self.worldSites = frame.loadFrame()
+
+        self.rivers = []
+
+
+    
+
 
     def generateLandmass(self):
         ceedCount = 3 * randrange(5,15)
