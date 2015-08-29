@@ -8,7 +8,7 @@ from camera import Camera
 class Starter(PygameHelper):
     def __init__(self):
         
-        self.w, self.h = 1600, 900
+        self.w, self.h = 1600, 1200
 
         self.camera = Camera()
         

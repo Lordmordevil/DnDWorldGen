@@ -1,6 +1,7 @@
 from random import randrange
 
 from voronoi import Voronoi
+from delaunay import Triangulation, Delaunay
 from vec2d import vec2d
 from worldSait import WorldSait
 from border import Border
@@ -142,3 +143,4 @@ class WorldFrame:
         else:
             site.borders = newBorders
             site.neighbours = newNeghbours
+        site.recalc_border_cache()

@@ -11,10 +11,13 @@ class WorldSait:
         self.neighbours = []
         self.borders = []
 
+        self.border_cache = []
+
         self.lockedElevation = False
         self.elevation = -10
 
         self.isOcean = False
+
         
     @property
     def name(self):
@@ -64,23 +67,31 @@ class WorldSait:
             color = elevationColor[self.elevation]
         return color
 
+    def markOcean(self, worldSites):
+        if not self.isOcean:
+            if self.lockedElevation:
+                self.isOcean = True
+                return True
+            elif self.elevation < 0:
+                for neighbour in self.neighbours:
+                    if worldSites[neighbour].isOcean:
+                        self.isOcean = True
+                        return True
+
+    def recalc_border_cache(self):
+        for border in self.borders:
+            for part in border.parts:
+                if len(self.border_cache) == 0:
+                    self.border_cache.append(part[0])
+                self.border_cache.append(part[1])
+
     def draw(self, screen, camera):
-        shouldDrawPoly = True;
-
-        if len(self.borders) < 2 or not camera.point_visible(self.center):
-            shouldDrawPoly = False
-
-        if shouldDrawPoly:
-            boundPoints = []
-            for border in self.borders:
-                for part in border.parts:
-                    if len(boundPoints) == 0:
-                        screen_border_point = camera.world_to_screen(part[0])
-                        boundPoints.append([screen_border_point.x, screen_border_point.y])
-                    screen_border_point = camera.world_to_screen(part[1])
-                    boundPoints.append([screen_border_point.x, screen_border_point.y])
-  
-            pygame.draw.polygon(screen, self.getColor(), boundPoints)
+        if len(self.borders) >= 2 and camera.point_visible(self.center):
+            drawborders = []
+            for point in self.border_cache:
+                screenPoint = camera.world_to_screen(point)
+                drawborders.append([screenPoint.x, screenPoint.y])
+            pygame.draw.polygon(screen, self.getColor(), drawborders)
             if camera.viewProps["ShowPoints"]:
                 point_pos = camera.world_to_screen(self.center)
                 pygame.draw.circle(screen, (200, 0, 0), point_pos, 2, 1)

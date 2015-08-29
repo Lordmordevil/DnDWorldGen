@@ -12,7 +12,7 @@ class WorldMap:
         self.seed = seed
         self.size = size
 
-        self.worldSites = WorldFrame(seed, size).loadFrame()
+        self.worldSites = WorldFrame(seed, size).saveFrame()
 
         self.rivers = []
 
@@ -25,7 +25,6 @@ class WorldMap:
         ceedHight = 11
 
         siteKeys = []
-        #siteKeys = list(self.worldSites.keys())
         for site in self.worldSites.items():
             if (site[1].center.x > borderSize and site[1].center.x < (self.size[0] - borderSize) and 
                 site[1].center.y > borderSize and site[1].center.y < (self.size[1] - borderSize) and 
@@ -61,16 +60,8 @@ class WorldMap:
         while True:
             haveChanges = False
             for site in self.worldSites.items():
-                if not site[1].isOcean:
-                    if site[1].lockedElevation:
-                        site[1].isOcean = True
-                        haveChanges = True
-                    elif site[1].elevation < 0:
-                        for neighbour in site[1].neighbours:
-                            if self.worldSites[neighbour].isOcean:
-                                site[1].isOcean = True
-                                haveChanges = True
-                                break
+                if site[1].markOcean(self.worldSites):
+                    haveChanges = True
             if not haveChanges:
                 break
 
@@ -149,16 +140,18 @@ class WorldMap:
                 neighbourId = site[1].neighbours[neighbourIdx]
                 neighbour = self.worldSites[neighbourId]
                 if site[1].getColor() != neighbour.getColor():
-                    border.subDevide(12)
+                    border.subDevide(9)
                     if site[0] in neighbour.neighbours:
                         borderMirrorIdx = neighbour.neighbours.index(site[0])
                         if border.start == neighbour.borders[borderMirrorIdx].start:
                             neighbour.borders[borderMirrorIdx].parts = site[1].borders[neighbourIdx].parts
                         else:
                             neighbour.borders[borderMirrorIdx].parts = site[1].borders[neighbourIdx].getReversedParts()
+                        neighbour.recalc_border_cache()
                     else:
                         print(neighbour.key)
                 neighbourIdx += 1
+            site[1].recalc_border_cache()
 
     def buildRiver(self, siteOneID, siteTwoID, river, allRivers):
         oldRiverPiece = river[-1][2]
