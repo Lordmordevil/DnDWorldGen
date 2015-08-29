@@ -64,24 +64,29 @@ class WorldSait:
             color = elevationColor[self.elevation]
         return color
 
-    def draw(self, screen, offset, zoom, viewProps):
-        boundPoints = []
+    def draw(self, screen, camera):
         shouldDrawPoly = True;
 
-        if len(self.borders) < 2:
+        if len(self.borders) < 2 or not camera.point_visible(self.center):
             shouldDrawPoly = False
 
         if shouldDrawPoly:
+            boundPoints = []
             for border in self.borders:
                 for part in border.parts:
                     if len(boundPoints) == 0:
-                        boundPoints.append([int((part[0].x + offset[0]) * zoom), int((part[0].y + offset[1]) * zoom)])
-                    boundPoints.append([int((part[1].x + offset[0]) * zoom), int((part[1].y + offset[1]) * zoom)])
-        if shouldDrawPoly:
+                        screen_border_point = camera.world_to_screen(part[0])
+                        boundPoints.append([screen_border_point.x, screen_border_point.y])
+                    screen_border_point = camera.world_to_screen(part[1])
+                    boundPoints.append([screen_border_point.x, screen_border_point.y])
+  
             pygame.draw.polygon(screen, self.getColor(), boundPoints)
-        if viewProps["ShowPoints"]:
-            pygame.draw.circle(screen, (200, 0, 0), (int((self.center.x + offset[0]) * zoom), int((self.center.y + offset[1]) * zoom)), 2, 1)
+            if camera.viewProps["ShowPoints"]:
+                point_pos = camera.world_to_screen(self.center)
+                pygame.draw.circle(screen, (200, 0, 0), point_pos, 2, 1)
 
-    def drawBorders(self, screen, offset, zoom, viewProps):
-        for border in self.borders:
-            border.draw(screen, offset, zoom, viewProps)
+
+    def drawBorders(self, screen, camera):
+        if camera.point_visible(self.center):
+            for border in self.borders:
+                border.draw(screen, camera)

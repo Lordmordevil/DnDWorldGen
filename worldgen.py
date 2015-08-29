@@ -1,17 +1,18 @@
 from pygamehelper import *
 from pygame import *
+
 from world import WorldMap 
-
-
-
+from camera import Camera
+        
 
 class Starter(PygameHelper):
     def __init__(self):
+        
         self.w, self.h = 1600, 900
-        self.offset = [0,0]
-        self.viewProps = {"ShowPoints" : False , "DrawMode" : 0}
-        self.zoom = 1
-        PygameHelper.__init__(self, size=(self.w, self.h), fill=((255,255,255)))
+
+        self.camera = Camera()
+        
+        PygameHelper.__init__(self, size=(self.camera.view_w, self.camera.view_h), fill=((255,255,255)))
 
         self.showVerts = True;
         self.showTesl = False;
@@ -19,13 +20,9 @@ class Starter(PygameHelper):
         self.map = WorldMap(123, (self.w, self.h))
 
         self.tileIdx = 0
-
-    def getOffset(self):
-        return [int(self.offset[0] * self.zoom), int(self.offset[1] * self.zoom)]
         
     def update(self):
-        pass
-            
+        pass      
         
     def keyUp(self, key):
         if key == 118: #pressed V
@@ -39,28 +36,28 @@ class Starter(PygameHelper):
             self.tileIdx = 0
             print("Reset Elevation")
         elif key == 112: #pressed P
-            self.viewProps["ShowPoints"] = not self.viewProps["ShowPoints"]
+            self.camera.viewProps["ShowPoints"] = not self.camera.viewProps["ShowPoints"]
             print("Show points")
         elif key == 109: #pressed M
-            self.viewProps["DrawMode"] += 1
-            if self.viewProps["DrawMode"] == 3:
-                self.viewProps["DrawMode"] = 0
+            self.camera.viewProps["DrawMode"] += 1
+            if self.camera.viewProps["DrawMode"] == 3:
+                self.camera.viewProps["DrawMode"] = 0
             print("Map mode")
         elif key == 110: #pressed N
             print("Next site: ", self.tileIdx)
             self.tileIdx += 1
         if key == 269:
-            self.zoom *= 0.66
+            self.camera.zoom *= 0.66
         if key == 270:
-            self.zoom *= 1.5
+            self.camera.zoom *= 1.5
         if key == 273:
-            self.offset[1] += 10/self.zoom
+            self.camera.offset[1] -= 10/self.camera.zoom
         if key == 274:
-            self.offset[1] -= 10/self.zoom
+            self.camera.offset[1] += 10/self.camera.zoom
         if key == 275:
-            self.offset[0] -= 10/self.zoom
+            self.camera.offset[0] += 10/self.camera.zoom
         if key == 276:
-            self.offset[0] += 10/self.zoom
+            self.camera.offset[0] -= 10/self.camera.zoom
 
         
     def mouseUp(self, button, pos):
@@ -72,15 +69,9 @@ class Starter(PygameHelper):
         
         
     def draw(self):
-        if self.viewProps["DrawMode"] == 0:
+        if self.camera.viewProps["DrawMode"] == 0:
             self.screen.fill((39, 50, 64))
-            self.map.draw(self.screen, self.getOffset(), self.zoom, self.viewProps)
-        elif self.viewProps["DrawMode"] == 1:
-            self.screen.fill((0, 0, 0))
-            self.map.drawSite(self.screen, self.viewProps, self.tileIdx)
-        elif self.viewProps["DrawMode"] == 2:
-            self.screen.fill((0, 0, 0))
-            self.map.drawRiver(self.screen, self.getOffset(), self.zoom, self.viewProps, self.tileIdx)
+            self.map.draw(self.screen, self.camera)
             
 
 s = Starter()

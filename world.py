@@ -7,14 +7,13 @@ from border import Border
 from worldFrame import WorldFrame
 from worldSait import WorldSait
 
-
 class WorldMap:
     def __init__(self, seed, size):
         self.seed = seed
         self.size = size
 
         self.worldSites = WorldFrame(seed, size).loadFrame()
-        
+
         self.rivers = []
 
 
@@ -233,44 +232,9 @@ class WorldMap:
 
 
             
-    def draw(self, screen, offset, zoom, viewProps):
+    def draw(self, screen, camera):
         for site in self.worldSites.items():
-            # if (site[1].center.x in range(offset[0], int(self.size[0]*zoom) + 20) and 
-            # site[1].center.y in range(offset[1], int(self.size[1]*zoom) + 20)):
-            site[1].draw(screen, offset, zoom, viewProps)
+            site[1].draw(screen, camera)
         for site in self.worldSites.items():
-            # if (site[1].center.x in range(offset[0], int(self.size[0]*zoom) + 20) and 
-            # site[1].center.y in range(offset[1], int(self.size[1]*zoom) + 20)):
-            site[1].drawBorders(screen, offset, zoom, viewProps)
+            site[1].drawBorders(screen, camera)
 
-    def drawSite(self, screen, viewProps, siteIdx):
-        siteKey = list(self.worldSites.keys())[siteIdx]
-        curSite = self.worldSites[siteKey]
-        zoom = self.size[1] / 100
-        offset = [40 - curSite.center.x, 40 - curSite.center.y]
-        curSite.draw(screen, offset, zoom, viewProps)
-        curSite.drawBorders(screen, offset, zoom, viewProps)
-        idx = 0
-        for neighbour in curSite.neighbours:
-            offsetSite = [0, 0]
-            offsetSite[0] = int((self.worldSites[neighbour].center.x - curSite.center.x)*0.5) + offset[0]
-            offsetSite[1] = int((self.worldSites[neighbour].center.y - curSite.center.y)*0.5) + offset[1]
-            self.worldSites[neighbour].draw(screen, offsetSite, zoom, viewProps)
-            siteMarkerPos = (int((self.worldSites[neighbour].center.x + offsetSite[0]) * zoom), int((self.worldSites[neighbour].center.y + offsetSite[1]) * zoom))
-            pygame.draw.circle(screen, (24 * idx, 240 - 24 * idx, 3 * idx), siteMarkerPos, 5)
-            idx += 1
-
-    def drawRiver(self, screen, offset, zoom, viewProps, siteIdx):
-        for site in self.worldSites.items():
-            site[1].draw(screen, offset, zoom, viewProps)
-        for site in self.worldSites.items():
-            site[1].drawBorders(screen, offset, zoom, viewProps)
-
-        curRiver = self.rivers[siteIdx]
-        print("Stats: ", len(curRiver), abs(curRiver[-1][2].elevation - curRiver[0][2].elevation))
-
-        for riverPart in curRiver:
-            curRiverPart = riverPart[2]
-            start = (int((curRiverPart.start.x + offset[0]) * zoom), int((curRiverPart.start.y+ offset[1]) * zoom))
-            end = (int((curRiverPart.end.x + offset[0]) * zoom), int((curRiverPart.end.y+ offset[1]) * zoom))
-            pygame.draw.line(screen, (125, 0, 0), start, end, 4)

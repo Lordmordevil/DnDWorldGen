@@ -36,11 +36,12 @@ class Border:
             reversedParts.append((part[1], part[0]))
         return reversedParts
 
-    def draw(self, screen, offset, zoom, viewProps):
+    def draw(self, screen, camera):
         for part in self.parts:
-            start = (int((part[0].x + offset[0]) * zoom), int((part[0].y+ offset[1]) * zoom))
-            end = (int((part[1].x + offset[0]) * zoom), int((part[1].y+ offset[1]) * zoom))
-            if viewProps["DrawMode"] == 1:
-                pygame.draw.line(screen, (0, 0, 0), start, end, 4)
-            elif self.isRiver:
-                pygame.draw.line(screen, (90, 132, 152), start, end, self.riverWidth+1)
+            if camera.point_visible(part[0]) or camera.point_visible(part[1]):
+                start = camera.world_to_screen(part[0])
+                end = camera.world_to_screen(part[1])
+                if camera.viewProps["DrawMode"] == 1:
+                    pygame.draw.line(screen, (0, 0, 0), start, end, 4)
+                elif self.isRiver:
+                    pygame.draw.line(screen, (90, 132, 152), start, end, self.riverWidth+1)
