@@ -17,7 +17,6 @@ class Starter(PygameHelper):
         self.showTesl = False;
 
         self.map = WorldMap(123, (self.w, self.h))
-        self.map.generate()
 
         self.tileIdx = 0
 
