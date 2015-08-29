@@ -8,15 +8,14 @@ from worldFrame import WorldFrame
 from worldSait import WorldSait
 
 
-
 class WorldMap:
     def __init__(self, seed, size):
         self.seed = seed
         self.size = size
 
-        self.rivers = []
-
         self.worldSites = WorldFrame(seed, size).loadFrame()
+        
+        self.rivers = []
 
 
     def generateLandmass(self):
