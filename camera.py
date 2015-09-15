@@ -2,8 +2,8 @@ from vec2d import vec2d
 
 class Camera:
     def __init__(self):
-        self.offset = [0,0]
-        self.zoom = 1
+        self.offset = [-20,-20]
+        self.zoom = 0.5
         self.viewProps = {"ShowPoints" : False , "DrawMode" : 0}
         self.view_w = 800
         self.view_h = 600

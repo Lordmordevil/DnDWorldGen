@@ -1,6 +1,8 @@
 from pygamehelper import *
 from pygame import *
 
+from random import randrange
+
 from world import WorldMap 
 from camera import Camera
         
@@ -26,15 +28,18 @@ class Starter(PygameHelper):
         
     def keyUp(self, key):
         if key == 118: #pressed V
-            self.map.generateLandmass()
-            print("Generating Land")
-        elif key == 98:  #pressed B
-            self.map.generateRivers()
-            print("Generate rivers")
-        elif key == 114: #pressed R
             self.map.reset()
             self.tileIdx = 0
             print("Reset Elevation")
+            for i in range(randrange(6,10)):
+                self.map.generateLandmass()
+                print("Generating Land")
+            self.map.generateRivers()
+            print("Generate rivers")
+        elif key == 98:  #pressed B
+            pass
+        elif key == 114: #pressed R
+            pass
         elif key == 112: #pressed P
             self.camera.viewProps["ShowPoints"] = not self.camera.viewProps["ShowPoints"]
             print("Show points")
