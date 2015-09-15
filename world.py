@@ -3,6 +3,7 @@ from pygame import *
 
 from random import randrange, choice
 
+from vec2d import vec2d
 from border import Border
 from worldFrame import WorldFrame
 from worldSait import WorldSait
@@ -12,17 +13,17 @@ class WorldMap:
         self.seed = seed
         self.size = size
 
-        self.worldSites = WorldFrame(seed, size).saveFrame()
+        self.worldSites = WorldFrame(seed, size).loadFrame()
 
         self.rivers = []
 
 
     def generateLandmass(self):
-        ceedCount = 3 * randrange(5,15)
+        ceedCount = 4 * randrange(5,15)
         mountainRange = 10
         borderSize = 200
 
-        ceedHight = 11
+        ceedHight = 10
 
         siteKeys = []
         for site in self.worldSites.items():
@@ -38,12 +39,22 @@ class WorldMap:
             while len(rangeMembers) < mountainRange:
                 curSite = self.worldSites[rangeMembers[-1]]
                 added = False
+                bestNeighbourId = None
+                bestDist = 1000000
                 for neighbour in curSite.neighbours:
                     if neighbour not in rangeMembers and not self.worldSites[neighbour].lockedElevation:
-                        self.worldSites[neighbour].elevation = ceedHight
-                        rangeMembers.append(neighbour)
-                        added = True
-                        break
+                        dirVecP = vec2d(int(self.size[0]/4), int(self.size[1]/2)) - self.worldSites[neighbour].center
+                        dirVecS = vec2d(int(self.size[0]*3/4), int(self.size[1]/2)) - self.worldSites[neighbour].center
+                        if dirVecP.get_length() < bestDist:
+                            bestDist = dirVecP.get_length()
+                            bestNeighbourId = neighbour
+                        elif  dirVecS.get_length() < bestDist:
+                            bestDist = dirVecS.get_length()
+                            bestNeighbourId = neighbour
+                if bestNeighbourId:
+                    self.worldSites[bestNeighbourId].elevation = ceedHight
+                    rangeMembers.append(bestNeighbourId)
+                    added = True
                 if not added:
                     print("Problem with generating mountain range")
                     break
@@ -130,7 +141,7 @@ class WorldMap:
                     width -= 1
         print("Result:")
         print("Rivers: ", len(self.rivers))
-        self.smoothBorders()
+        #self.smoothBorders()
         
 
     def smoothBorders(self):
